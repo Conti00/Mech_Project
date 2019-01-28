@@ -1,0 +1,79 @@
+<!--
+ - Created by BRITENET on 07.11.2018.
+ -->
+<apex:page id="MechanicSearchPage" controller="CustomSearchController">
+    <apex:form id="searchForm">
+        <apex:pageBlock title="{!$Label.Mech_SearchingPage}" id="SearchingBlock">
+            <apex:pageBlockSection columns="2" id="mechanicInfoSection" collapsible="false">
+                <apex:pageBlockSectionItem id="mechanicInfoSectionName">
+                    <apex:outputLabel value="{!$Label.Mech_LastName}"/>
+                    <apex:inputField value="{!mechanic.Name}" id="inputName"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="mechanicInfoSectionEmail">
+                    <apex:outputLabel value="{!$Label.Mech_Email}"/>
+                    <apex:inputField value="{!mechanic.Email__c}" id="inputEmail" required="true"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="mechanicInfoSectionCountry">
+                    <apex:outputLabel value="{!$Label.Mech_Country}"/>
+                    <apex:inputField value="{!mechanic.Country__c}" id="inputCountry"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <div align="center" draggable="false">
+            <apex:commandButton value="{!$Label.Mech_Search}" action="{!searchMechanics}" />
+            <apex:commandButton value="{!$Label.Mech_Clear}" onClick="clearFields()" reRender="MechanicSearchPage"/>
+            <apex:commandButton value="{!$Label.Mech_Export_CSV}" action="{!exportToCsv}" immediate="true" />
+            <apex:commandButton value="{!$Label.Mech_Export_XLS}" action="{!exportToXls}" immediate="true"/>
+        </div>
+        <apex:pageBlock title="{!$Label.Mech_Search_Result}" id="searchResult">
+            <apex:panelGroup >
+                <apex:selectList value="{!pageSize}" size="1">
+                    <apex:selectOption itemValue="5" itemLabel="5"></apex:selectOption>
+                    <apex:selectOption itemValue="10" itemLabel="10"></apex:selectOption>
+                    <apex:selectOption itemValue="15" itemLabel="15"></apex:selectOption>
+                </apex:selectList>
+            </apex:panelGroup>
+            <apex:panelGroup >
+                <apex:selectList value="{!sortType}" size="1">
+                    Sort Type:
+                    <apex:selectOption itemValue="Name" itemLabel="{!$Label.Mech_Name}"></apex:selectOption>
+                    <apex:selectOption itemValue="Email__c" itemLabel="{!$Label.Mech_Email}"></apex:selectOption>
+                    <apex:selectOption itemValue="Country__c" itemLabel="{!$Label.Mech_Country}"></apex:selectOption>
+                </apex:selectList>
+            </apex:panelGroup>
+
+
+            <apex:pageBlockTable value="{!mechanics}" var="mech" rows="{!PageSize}" id="resultPageBlockTable">
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                    <apex:outputLink target="_blank" value="/{!mech.Id}"> View</apex:outputLink>
+                    <apex:outputLink target="_blank" value="/{!mech.Id}/e"> Edit</apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Name}</apex:facet>
+                    <apex:outputText value="{!mech.Name}" id="outName"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Email}</apex:facet>
+                    <apex:outputText value="{!mech.Email__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Phone}</apex:facet>
+                    <apex:outputText value="{!mech.Phone_Number__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Country}</apex:facet>
+                    <apex:outputText value="{!mech.Country__c}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+
+    <script>
+        function clearFields(){
+            document.getElementById('{!$Component.MechanicSearchPage:searchForm:SearchingBlock:mechanicInfoSection:mechanicInfoSectionName:inputName}').value='';
+            document.getElementById('{!$Component.MechanicSearchPage:searchForm:SearchingBlock:mechanicInfoSection:mechanicInfoSectionCountry:inputCountry}').value='';
+            document.getElementById('{!$Component.MechanicSearchPage:searchForm:SearchingBlock:mechanicInfoSection:mechanicInfoSectionEmail:inputEmail}').value='';
+    }
+    </script>
+</apex:page>

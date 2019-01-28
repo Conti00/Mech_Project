@@ -1,0 +1,101 @@
+<!--
+ - Created by BRITENET on 07.11.2018.
+ -->
+<apex:page id="MechanicSearchPage" controller="Mech_MechanicsSearchController">
+    <apex:form id="searchForm">
+        <apex:messages >
+            <apex:pageBlock title="{!$Label.Mech_SearchingPage}" id="SearchingBlock">
+                <apex:pageBlockSection columns="2" id="mechanicInfoSection" collapsible="false">
+                    <apex:inputField value="{!mechanic.Name}" id="inputName"/>
+                    <apex:inputField value="{!mechanic.Email__c}" id="inputEmail" required="true"/>
+                    <apex:inputField value="{!mechanic.Country__c}" id="inputCountry"/>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <div align="center" draggable="false">
+                <apex:commandButton value="{!$Label.Mech_Search}" action="{!searchMechanics}" reRender="searchForm"
+                                    status="status"/>
+                <apex:actionStatus id="status">
+                    <apex:facet name="start">
+                        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.75; z-index: 1000; background-color: black;">
+                            &nbsp;
+                        </div>
+                        <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 30% 50%">
+                            <img src="{!$Resource.Spinner}"/>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <apex:commandButton value="{!$Label.Mech_Clear}" onClick="clearFields()"/>
+                <apex:commandButton value="{!$Label.Mech_Export_CSV}" action="{!exportToCSV}">
+                    <apex:param name="typeOfFile" value="/apex/Mech_ExportToCSV" assignTo="{!toFileType}"/>
+                </apex:commandButton>
+                <apex:commandButton value="{!$Label.Mech_Export_XLS}" action="{!exportToXls}" immediate="true"/>
+            </div>
+            <apex:pageBlock title="{!$Label.Mech_Search_Result}" id="searchResult">
+                <apex:panelGroup >
+                    <apex:selectList value="{!queryLimit}" size="1">
+                        <apex:selectOption itemValue="5" itemLabel="5"></apex:selectOption>
+                        <apex:selectOption itemValue="10" itemLabel="10"></apex:selectOption>
+                        <apex:selectOption itemValue="15" itemLabel="15"></apex:selectOption>
+                    </apex:selectList>
+                    <apex:commandButton value="{!$Label.Mech_Begin}" action="{!beginning}" disabled="{!prev}"/>
+                    <apex:commandButton value="{!$Label.Mech_Previous}" action="{!previous}" disabled="{!prev}"/>
+                    <apex:commandButton value="{!$Label.Mech_Next}" action="{!next}" disabled="{!nex}"/>
+                    <apex:commandButton value="{!$Label.Mech_End}" action="{!end}" disabled="{!nex}"/>
+                </apex:panelGroup>
+
+                <apex:pageBlockTable value="{!mechanics}" var="mech" rows="{!queryLimit}" id="resultPageBlockTable">
+                    <apex:column >
+                        <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                        <apex:outputLink target="_blank" value="/{!mech.Id}"> {!$Label.Mech_View}</apex:outputLink>
+                        <apex:outputLink target="_blank" value="/{!mech.Id}/e"> {!$Label.Mech_Edit}</apex:outputLink>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:commandLink action="{!sortByField}">
+                                <apex:param name="setSortType" value="Name"
+                                            assignTo="{!sortType}"/>{!$ObjectType.Mechanic__c.fields.Name.Label}
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:outputText value="{!mech.Name}" id="outName"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:commandLink action="{!sortByField}">
+                                <apex:param name="setSortType" value="Email__c"
+                                            assignTo="{!sortType}"/>{!$ObjectType.Mechanic__c.fields.Email__c.Label}
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:outputText value="{!mech.Email__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:commandLink action="{!sortByField}">
+                                <apex:param name="setSortType" value="Phone_Number__c"
+                                            assignTo="{!sortType}"/>{!$ObjectType.Mechanic__c.fields.Phone_Number__c.Label}
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:outputText value="{!mech.Phone_Number__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            <apex:commandLink action="{!sortByField}">
+                                <apex:param name="setSortType" value="Country__c"
+                                            assignTo="{!sortType}"/>{!$ObjectType.Mechanic__c.fields.Country__c.Label}
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:outputText value="{!mech.Country__c}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:messages>
+        <c:Mech_loadingIcon />
+    </apex:form>
+    <script>
+        function clearFields(){
+            document.getElementById('{!$Component.MechanicSearchPage:searchForm:SearchingBlock:mechanicInfoSection:inputName}').value='';
+            document.getElementById('{!$Component.MechanicSearchPage:searchForm:SearchingBlock:mechanicInfoSection:inputCountry}').value='';
+            document.getElementById('{!$Component.MechanicSearchPage:searchForm:SearchingBlock:mechanicInfoSection:inputEmail}').value='';
+    }
+
+    </script>
+</apex:page>

@@ -1,0 +1,316 @@
+<!--
+ - Created by BRITENET on 21.11.2018.
+ -->
+<apex:page id="Mech_ManageExternalMechanicsSOAP" controller="Mech_ManageMechanicsSOAPController">
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.css')}"/>
+
+    <apex:slds />
+    <div class="slds-scope slds-is-relative">
+        <div class="slds-page-header">
+            <div class="slds-media">
+                <div class="slds-media__figure">
+                   <span class="slds-icon_container slds-icon-standard-account">
+                       <svg class="slds-icon slds-page-header__icon" aria-hidden="true">
+                           <use xmlns:xlink="http://www.w3.org/1999/xlink"
+                                xlink:href="/assets/icons/standard-sprite/svg/symbols.svg#account"/>
+                   </svg>
+                   </span>
+                </div>
+                <div class="slds-media__body">
+                    <h1 class="slds-page-header__title slds-truncate slds-align-middle">{!$Label.Mech_SearchingPage}</h1>
+                </div>
+            </div>
+        </div>
+        <br/><br/>
+        <div class="demo-only" style="width: 70%;">
+            <apex:form id="SearchMechanicForm">
+                <apex:actionFunction name="searchMechanicsAction" action="{!searchMechanics}"
+                                     reRender="foundMechanicsForm">
+                </apex:actionFunction>
+                <div class="slds-form slds-form_compound ">
+                    <fieldset class="slds-form-element ">
+                        <legend class="slds-form-element__label slds-text-title_caps">{!$Label.Mech_Search}</legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row slds-box slds-theme_shade">
+                                <div class="slds-form-element slds-small-order--1">
+                                    <label class="slds-form-element__label" for="input-00">{!$ObjectType.Mechanic__c.fields.First_Name__c.Label}</label>
+                                    <apex:inputText id="input-00" styleClass="slds-input" value="{!firstName}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--1">
+                                    <label class="slds-form-element__label" for="input-01">{!$ObjectType.Mechanic__c.fields.Name.Label}</label>
+                                    <apex:inputText id="input-01" styleClass="slds-input"
+                                                    value="{!lastName}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--2">
+                                    <label class="slds-form-element__label" for="input-02">{!$ObjectType.Mechanic__c.fields.City__c.Label}</label>
+                                    <apex:inputText id="input-02" styleClass="slds-input"
+                                                    value="{!city}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--3">
+                                    <label class="slds-form-element__label" for="input-03">{!$ObjectType.Mechanic__c.fields.Country__c.Label}</label>
+                                    <apex:inputText id="input-03" styleClass="slds-input"
+                                                    value="{!country}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="slds-button-group slds-align_absolute-center" role="group">
+                        <apex:commandButton id="searchMechanicButton" onClick="searchMechanics(true);"
+                                            reRender="foundMechanicsForm"
+                                            value="{!$Label.Mech_Search}" styleClass="slds-button slds-button_neutral"
+                                            status="status" onComplete="searchActionCompleteFunction();"/>
+                        <apex:commandButton id="clearList" action="{!clearSearchForm}" value="{!$Label.Mech_Clear}"
+                                            reRender="SearchMechanicForm, foundMechanicsForm"
+                                            styleClass="slds-button slds-button_neutral" status="status"/>
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+    </div>
+    <article class="slds-card" style="margin-top: 10px; padding-bottom: 10px;">
+        <apex:form id="foundMechanicsForm">
+            <apex:actionFunction name="deleteMechanicAction" action="{!deleteMechanic}" reRender="foundMechanicsForm"
+                                 onComplete="deletingMechanicCompleteFunction()">
+                <apex:param name="mechanicToDeleteId" value="" assignTo="{!mechanicToDeleteId}"/>
+            </apex:actionFunction>
+            <apex:actionFunction name="setEditedMechanic" action="{!setEditedMechanic}" reRender="modalForm"
+                                 immediate="true">
+                <apex:param name="editedMechanicId" value="" assignTo="{!editedMechanicId}"/>
+            </apex:actionFunction>
+            <input id="deleteMechanicSuccessValue" style="visibility: hidden" value="{!deleteMechanicSuccess}"/>
+            <input id="updateMechanicSuccessValue" style="visibility: hidden" value="{!updateMechanicSuccess}"/>
+            <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h2>
+                            <span class="slds-text-heading_small">{!$Label.Mech_FoundMechanics}</span>
+                        </h2>
+                    </div>
+                </header>
+            </div>
+            <div class="slds-table slds-table_bordered slds-table_col-bordered slds-table slds-max-medium-table_stacked-horizontal"
+                 style="padding-top: 0px;">
+                <table class="slds-table slds-table_bordered " id="mechanicsTable">
+                    <thead>
+                    <tr class="slds-text-title_caps">
+                        <th scope="col" width="15%">
+                            <div class="slds-truncate" title="Actions">{!$Label.Mech_Action}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate"
+                                 title="First Name">{!$ObjectType.Mechanic__c.fields.First_Name__c.Label}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate"
+                                 title="Last Name">{!$ObjectType.Mechanic__c.fields.Name.Label}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate"
+                                 title="City">{!$ObjectType.Mechanic__c.fields.City__c.Label}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate"
+                                 title="Country">{!$ObjectType.Mechanic__c.fields.Country__c.Label}</div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <apex:repeat value="{!allMechanics}" var="mechanic">
+                        <tr>
+                            <td data-label="{!$Label.Mech_Action}">
+                                <div class="slds-button-group slds-align_absolute-center" role="group">
+                                    <apex:commandButton id="deleteMechanicButton"
+                                                        styleClass="slds-button slds-button_neutral slds-button-group"
+                                                        value="Delete"
+                                                        onclick="openDeleteMechanicModalFunction('{!mechanic.id}'); return false;"
+                                                        status="status"/>
+                                    <apex:commandButton id="updateMechanicButton"
+                                                        styleClass="slds-button slds-button_neutral" value="Update"
+                                                        onClick="openUpdateMechanicModalFunction('{!mechanic.id}'); return false;"
+                                                        status="status"/>
+                                </div>
+                            </td>
+
+                            <td data-label="{!$ObjectType.Mechanic__c.fields.First_Name__c.Label}">
+                                <div class="slds-truncate" title="First Name">{!mechanic.firstName}
+                                </div>
+                            </td>
+                            <td data-label="{!$ObjectType.Mechanic__c.fields.Name.Label}">
+                                <div class="slds-truncate" title="Last Name">{!mechanic.lastName}</div>
+                            </td>
+                            <td data-label="{!$ObjectType.Mechanic__c.fields.City__c.Label}">
+                                <div class="slds-truncate" title="City">{!mechanic.city}</div>
+                            </td>
+                            <td data-label="{!$ObjectType.Mechanic__c.fields.Country__c.Label}">
+                                <div class="slds-truncate" title="Country">{!mechanic.country}</div>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                </table>
+            </div>
+        </apex:form>
+    </article>
+
+    <div class="slds">
+        <div class="slds-modal slds-modal--prompt" aria-hidden="false" role="dialog" id="modal">
+            <apex:form id="modalForm">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <h2 class="slds-text-heading--medium">Update mechanic</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around--medium">
+                        <fieldset class="slds-form-element">
+                            <div class="slds-form-element__group">
+                                <div class="slds-form-element__row">
+                                    <div class="slds-form-element slds-small-order--1">
+                                        <label class="slds-form-element__label">{!$ObjectType.Mechanic__c.fields.First_Name__c.Label}</label>
+                                        <apex:inputText styleClass="slds-input" value="{!editedMechanic.firstName}"/>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element__row">
+                                    <div class="slds-form-element slds-small-order--1">
+                                        <label class="slds-form-element__label">{!$ObjectType.Mechanic__c.fields.Name.Label}</label>
+                                        <apex:inputText styleClass="slds-input" value="{!editedMechanic.lastName}"/>
+                                    </div>
+                                </div>
+                                <div class="slds-form-element__row">
+                                    <div class="slds-form-element slds-small-order--2">
+                                        <label class="slds-form-element__label">{!$ObjectType.Mechanic__c.fields.City__c.Label}</label>
+                                        <apex:inputText styleClass="slds-input" value="{!editedMechanic.city}"/>
+                                    </div>
+                                    <div class="slds-form-element slds-small-order--3">
+                                        <label class="slds-form-element__label">{!$ObjectType.Mechanic__c.fields.Country__c.Label}</label>
+                                        <apex:inputText styleClass="slds-input" value="{!editedMechanic.country}"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <apex:commandButton id="updateMechanicButton" action="{!updateMechanic}"
+                                            onClick="openSpinnerModal();" reRender="foundMechanicsForm"
+                                            styleClass="slds-button slds-button--brand" value="{!$Label.Mech_Update}"
+                                            onComplete="updatingMechanicCompleteFunction()" status="status"/>
+                        <apex:commandButton id="closeUpdateMechanicModalButton" reRender="none"
+                                            styleClass="slds-button slds-button--neutral" value="{!$Label.Mech_Close}"
+                                            onclick="closeUpdateMechanicModal()" status="status"/>
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+        <div class="slds-backdrop" id="backdrop"></div>
+    </div>
+
+    <div class="slds">
+        <div class="slds-modal slds-modal--prompt" aria-hidden="false" role="dialog" id="deleteModal">
+            <apex:form id="deleteModalForm">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <h2 class="slds-text-heading--medium">{!$Label.Mech_Confirm}</h2>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <apex:commandButton id="acceptRecordRemoval" reRender="foundMechanicsForm"
+                                            styleClass="slds-button slds-button--brand" value="{!$Label.Mech_Delete}"
+                                            onClick="deleteMechanic(); openSpinnerModal();"/>
+                        <apex:commandButton id="declineRecordRemoval" reRender="none"
+                                            styleClass="slds-button slds-button--neutral" value="{!$Label.Mech_Cancel}"
+                                            onclick="closeDeleteMechanicModal()"/>
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+        <div class="slds-backdrop" id="backdrop1"></div>
+    </div>
+
+    <div class="slds">
+        <div class="slds-modal" aria-hidden="false" role="dialog" id="spinnerModal">
+            <div class="slds-modal__container">
+                <div class="slds-modal__content slds-p-around--medium">
+                    <div id="spinner" style="height: 6rem; z-index: 999">
+                        <div role="status" class="slds-spinner slds-spinner_medium">
+                            <span class="slds-assistive-text">Loading</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        var recordToDeleteId;
+
+        function deleteMechanic(){
+            deleteMechanicAction(recordToDeleteId);
+        }
+
+        function openDeleteMechanicModalFunction(id){
+            recordToDeleteId = id;
+            openDeleteMechanicModal();
+        }
+
+        function openUpdateMechanicModalFunction(editedMechanicId){
+            setEditedMechanic(editedMechanicId);
+            openUpdateMechanicModal();
+        }
+
+        function searchMechanics(condition){
+            if(condition){
+                searchMechanicsAction();
+            }
+        }
+
+        function updatingMechanicCompleteFunction(){
+            var updateMechanicSuccess = document.getElementById('updateMechanicSuccessValue').value;
+            closeUpdateMechanicModal();
+            searchMechanics(updateMechanicSuccess);
+            closeSpinnerModal();
+        }
+
+        function deletingMechanicCompleteFunction(){
+            var deleteMechanicSuccess = document.getElementById('deleteMechanicSuccessValue').value;
+            closeDeleteMechanicModal();
+            searchMechanics(deleteMechanicSuccess);
+            closeSpinnerModal();
+        }
+
+        j$ = jQuery.noConflict();
+
+        function openUpdateMechanicModal(){
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#modal').addClass('slds-fade-in-open');
+        }
+        //Modal Close
+        function closeUpdateMechanicModal(){
+          j$('#modal').removeClass('slds-fade-in-open');
+          j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function openDeleteMechanicModal(){
+            j$('#backdrop1').addClass('slds-backdrop--open');
+            j$('#deleteModal').addClass('slds-fade-in-open');
+        }
+        //Modal Close
+        function closeDeleteMechanicModal(){
+          j$('#deleteModal').removeClass('slds-fade-in-open');
+          j$('#backdrop1').removeClass('slds-backdrop--open');
+        }
+
+        function openSpinnerModal(){
+            j$('#backdrop1').addClass('slds-backdrop--open');
+            j$('#spinnerModal').addClass('slds-fade-in-open');
+        }
+        //Modal Close
+        function closeSpinnerModal(){
+          j$('#spinnerModal').removeClass('slds-fade-in-open');
+          j$('#backdrop1').removeClass('slds-backdrop--open');
+        }
+
+
+    </script>
+</apex:page>

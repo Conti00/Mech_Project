@@ -1,0 +1,337 @@
+<!--
+ - Created by BRITENET on 23.11.2018.
+ -->
+<apex:page id="Mech_ManageExternalRepairShopsREST" controller="Mech_ManageRepairShopsRESTController">
+
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+
+    <apex:slds />
+    <div class="slds-scope">
+        <div class="slds-page-header">
+            <div class="slds-media">
+                <div class="slds-media__figure">
+                </div>
+                <div class="slds-media__body">
+                    <h1 class="slds-page-header__title slds-truncate slds-align-middle">{!$Label.Mech_SearchForm}</h1>
+                </div>
+            </div>
+        </div>
+        <br/><br/>
+        <div class="demo-only" style="width: 50%;">
+            <apex:form id="SearchRepairShopForm">
+                <apex:actionFunction name="searchRepairShopsAction" action="{!searchRepairShops}" reRender="ResultsBlock">
+                </apex:actionFunction>
+                <div class="slds-form slds-form_compound ">
+                    <fieldset class="slds-form-element ">
+                        <legend class="slds-form-element__label slds-text-title_caps">{!$Label.Mech_Search}</legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row slds-box slds-theme_shade">
+                                <div class="slds-form-element slds-small-order--1">
+                                    <label class="slds-form-element__label" for="input-01">{!$ObjectType.Repair_Shop__c.fields.Name.Label}</label>
+                                    <apex:inputfield id="input-01" styleClass="slds-input"
+                                                     value="{!searchedRepairShop.Name}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--2">
+                                    <label class="slds-form-element__label" for="input-02">{!$ObjectType.Repair_Shop__c.fields.City__c.Label}</label>
+                                    <apex:inputField id="input-02" styleClass="slds-input"
+                                                     value="{!searchedRepairShop.City__c}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--3">
+                                    <label class="slds-form-element__label" for="input-03">{!$ObjectType.Repair_Shop__c.fields.Country__c.Label}</label>
+                                    <apex:inputField id="input-03" styleClass="slds-input"
+                                                     value="{!searchedRepairShop.Country__c}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="slds-button-group slds-align_absolute-center" role="group">
+                        <apex:commandButton action="{!searchRepairShops}" onClick="openSpinnerModal()" onComplete="closeSpinnerModal()"
+                                            reRender="ResultsBlock,RepairShopsResults, RepairShopsResultsTableBody, RepairShopsResultsTableHead"
+                                            value="{!$Label.Mech_Search}" styleClass="slds-button slds-button_neutral"
+                                            status="status"/>
+                        <apex:commandButton action="{!clear}" value="{!$Label.Mech_Clear}" onClick="openSpinnerModal()" onComplete="closeSpinnerModal()" reRender="ResultsBlock, SearchRepairShopForm"
+                                            styleClass="slds-button slds-button_neutral"  status="status"/>
+                        <apex:commandButton id="openAddModal" reRender="modalFormAdd"
+                                            styleClass="slds-button slds-button_neutral" value="{!$Label.Mech_Add}"
+                                            onClick="openAddModalFunction('');"
+                                            immediate="true" status="status" />
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+        <apex:form id="ResultsBlock">
+            <apex:actionFunction name="updateRepairShopAction" action="{!updateRepairShop}" reRender="ResultsBlock">
+                <apex:param value="" name="repairShopToEdit" assignTo="{!editedRepairShop}"/>
+                <apex:param value="" name="repairShopToDeleteId" assignTo="{!repairShopToDeleteId}"/>
+                <!--<apex:param value="" name="repairShopToAdd" assignTo="{!insertedRepairShop}"/>-->
+            </apex:actionFunction>
+            <apex:actionFunction name="addRepairShopAction" action="{!updateRepairShop}" reRender="ResultsBlock">
+            <apex:param value="" name="repairShopToAdd" assignTo="{!insertedRepairShop}"/>
+                <apex:param value="" name="repairShopToEdit" assignTo="{!editedRepairShop}"/>
+                <apex:param name="setRepairShopIdToEdit" assignTo="{!editedRepairShopId}" value="" />
+            </apex:actionFunction>
+            <apex:actionFunction name="deleteRepairShopAction" action="{!deleteRepairShop}"
+                                 reRender="ResultsBlock, RepairShopsResults" onComplete="deletingRepairShopCompleteFunction()">
+                <apex:param value="" name="repairShopToDeleteId" assignTo="{!repairShopToDeleteId}"/>
+            </apex:actionFunction>
+
+            <apex:actionFunction name="setEditedRepairShop" action="{!setEditedRepairShop}" reRender="modalForm, updateConfirmationModalForm, deleteConfirmationModalForm">
+                <apex:param name="setRepairShopIdToEdit" assignTo="{!editedRepairShopId}" value="" />
+            </apex:actionFunction>
+
+            <input id="deleteRepairShopSuccessValue" style="visibility: hidden " value="{!deleteRepairShopSuccess}"/>
+            <input id="updateRepairShopSuccessValue" style="visibility: hidden" value="{!updateRepairShopSuccess}"/>
+            <div class="slds-table slds-table_bordered slds-table_col-bordered slds-table slds-max-medium-table_stacked-horizontal">
+                <table class="slds-table slds-table_bordered " id="RepairShopsResults">
+                    <thead id="RepairShopsResultsTableHead">
+                    <tr class="slds-text-title_caps">
+                        <th scope="col" width="15%">
+                            <div class="slds-truncate" title="Actions">{!$Label.Mech_Action}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="RepairShop Name">{!$ObjectType.Repair_Shop__c.fields.Name.Label}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="City">{!$ObjectType.Repair_Shop__c.fields.City__c.Label}</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Country">{!$ObjectType.Repair_Shop__c.fields.Country__c.Label}</div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="RepairShopsResultsTableBody">
+                    <apex:repeat value="{!selectedRepairShops}" var="repairShop" id="results">
+                        <tr>
+                            <td data-label="Actions">
+                                <div class="slds-button-group slds-align_absolute-center" role="group">
+                                    <apex:commandButton reRender="deleteConfirmationModal" value="{!$Label.Mech_Delete}"
+                                                        styleClass="slds-button slds-button_neutral slds-button-group"
+                                                        onClick="openDeleteModalFunction('{!repairShop.ExternalIdDev2__c}')"
+                                                        status="status">
+                                    </apex:commandButton>
+                                    <apex:commandButton id="openUpdateModal" reRender="modal"
+                                                        styleClass="slds-button slds-button_neutral" value="{!$Label.Mech_Update}"
+                                                        onClick="openUpdateModalFunction('{!repairShop.ExternalIdDev2__c}');"/>
+                                </div>
+                                <div class="slds-truncate" title="Actions"></div>
+                            </td>
+                            <td data-label="{!$ObjectType.Repair_Shop__c.fields.Name.Label}">
+                                <div class="slds-truncate" title="RepairShop Name">{!repairShop.name}</div>
+                            </td>
+                            <td data-label="{!$ObjectType.Repair_Shop__c.fields.City__c.Label}">
+                                <div class="slds-truncate" title="City">{!repairShop.City__c}</div>
+                            </td>
+                            <td data-label="{!$ObjectType.Repair_Shop__c.fields.Country__c.Label}">
+                                <div class="slds-truncate" title="Country">{!repairShop.Country__c}</div>
+                            </td>
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                </table>
+            </div>
+        </apex:form>
+    </div>
+    <div class="slds">
+        <div class="slds-modal slds-modal--prompt" aria-hidden="false" role="dialog" id="modal">
+            <apex:form id="modalForm">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <apex:outputText value="{!$Label.Mech_Update} {!editedRepairShop.Name}"
+                                         styleClass="slds-text-heading--medium"/>
+                    </div>
+                    <fieldset class="slds-form-element ">
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row slds-box slds-theme_shade">
+                                <div class="slds-form-element slds-small-order--1">
+                                    <label class="slds-form-element__label" for="modalInputName">{!$ObjectType.Repair_Shop__c.fields.Name.Label}</label>
+                                    <apex:inputfield id="modalInputName" styleClass="slds-input"
+                                                     value="{!editedRepairShop.Name}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--2">
+                                    <label class="slds-form-element__label" for="modalInputCity">{!$ObjectType.Repair_Shop__c.fields.City__c.Label}</label>
+                                    <apex:inputField id="modalInputCity" styleClass="slds-input"
+                                                     value="{!editedRepairShop.City__c}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--3">
+                                    <label class="slds-form-element__label" for="modalInputCountry">{!$ObjectType.Repair_Shop__c.fields.Country__c.Label}</label>
+                                    <apex:inputField id="modalInputCountry" styleClass="slds-input"
+                                                     value="{!editedRepairShop.Country__c}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="slds-modal__footer">
+                        <apex:commandButton styleClass="slds-button slds-button--neutral"
+                                            onclick="closeModal();return false" value="{!$Label.Mech_Cancel}"/>
+                        <apex:commandButton styleClass="slds-button slds-button--neutral slds-button--brand" onClick="openSpinnerModal();"
+                                            onComplete="closeModal();updatingRepairShopCompleteFunction()" value="{!$Label.Mech_Update}" action="{!updateRepairShop}"
+                                            immediate="false" reRender="ResultsBlock"
+                                            status="status"></apex:commandButton>
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+    </div>
+
+    <div class="slds">
+        <div class="slds-modal slds-modal--prompt" aria-hidden="false" role="dialog" id="modalAdd">
+            <apex:form id="modalFormAdd">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <apex:outputText value="{!$Label.Mech_Add}"
+                                         styleClass="slds-text-heading--medium"/>
+                    </div>
+                    <fieldset class="slds-form-element ">
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row slds-box slds-theme_shade">
+                                <div class="slds-form-element slds-small-order--1">
+                                    <label class="slds-form-element__label" for="modalInputName">{!$ObjectType.Repair_Shop__c.fields.Name.Label}</label>
+                                    <apex:inputfield id="modalInputName" styleClass="slds-input"
+                                                     value="{!insertedRepairShop.Name}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--2">
+                                    <label class="slds-form-element__label" for="modalInputCity">{!$ObjectType.Repair_Shop__c.fields.City__c.Label}</label>
+                                    <apex:inputField id="modalInputCity" styleClass="slds-input"
+                                                     value="{!insertedRepairShop.City__c}"/>
+                                </div>
+                                <div class="slds-form-element slds-small-order--3">
+                                    <label class="slds-form-element__label" for="modalInputCountry">{!$ObjectType.Repair_Shop__c.fields.Country__c.Label}</label>
+                                    <apex:inputField id="modalInputCountry" styleClass="slds-input"
+                                                     value="{!insertedRepairShop.Country__c}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="slds-modal__footer">
+                        <apex:commandButton styleClass="slds-button slds-button--neutral"
+                                            onComplete="closeModalAdd()" value="{!$Label.Mech_Cancel}" action="{!clearAddUpdateModal}" reRender="modalFormAdd"/>
+
+                        <apex:commandButton styleClass="slds-button slds-button--neutral slds-button--brand" onClick="openSpinnerModal();"
+                                            onComplete="closeModalAdd(); addingRepairShopCompleteFunction()" value="{!$Label.Mech_Add}" action="{!updateRepairShop}"
+                                            immediate="false" reRender="ResultsBlock, modalFormAdd"
+                                            status="status"></apex:commandButton>
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+    </div>
+    <div class="slds">
+        <div class="slds-modal slds-modal--prompt" aria-hidden="false" role="dialog" id="deleteConfirmationModal">
+            <apex:form id="deleteConfirmationModalForm">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <apex:outputText value="{!$Label.Mech_Are_You_Sure}"
+                                         styleClass="slds-text-heading--medium"/>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <apex:commandButton styleClass="slds-button slds-button--neutral"
+                                            onclick="closeDeleteModal();return false" action="{!searchRepairShops}" value="{!$Label.Mech_Cancel}"/>
+                        <apex:commandButton styleClass="slds-button slds-button--neutral slds-button--brand"
+                                            value="{!$Label.Mech_Delete}" onClick="deleteRepairShop();openSpinnerModal()" onComplete="deletingRepairShopCompleteFunction()" action="{!searchRepairShops}" reRender="ResultsBlock"></apex:commandButton>
+                    </div>
+                </div>
+            </apex:form>
+        </div>
+    </div>
+
+    <div class="slds-backdrop" id="backdrop"></div>
+    <div class="slds">
+        <div class="slds-modal" aria-hidden="false" role="dialog" id="spinnerModal">
+            <div class="slds-modal__container">
+                <div class="slds-modal__content slds-p-around--medium">
+                    <div id="spinner" style="height: 6rem; z-index: 999">
+                        <div role="status" class="slds-spinner slds-spinner--medium">
+                            <span class="slds-assistive-text">{!$Label.Mech_Loading}</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var recordToDeleteId;
+
+        function deleteRepairShop(){
+            console.log('metoda: deleteRepairShop(): id to delete: '+recordToDeleteId);
+            deleteRepairShopAction(recordToDeleteId);
+        }
+        function searchRepairShops(condition){
+            if(condition){
+                searchRepairShopsAction();
+            }
+        }
+
+        function updatingRepairShopCompleteFunction(){
+            var updateRepairShopSuccess = document.getElementById('updateRepairShopSuccessValue').value;
+            searchRepairShops(updateRepairShopSuccessValue);
+            closeSpinnerModal();
+        }
+
+         function addingRepairShopCompleteFunction(){
+           searchRepairShops(true);
+            closeSpinnerModal();
+        }
+
+        function deletingRepairShopCompleteFunction(){
+            var deleteRepairShopSuccess = document.getElementById('deleteRepairShopSuccessValue').value;
+            closeDeleteModal();
+            searchRepairShops(deleteRepairShopSuccessValue);
+            searchRepairShopsAction();
+            closeSpinnerModal();
+        }
+
+         j$ = jQuery.noConflict();
+
+        function openUpdateModalFunction(editedRepairShopId){
+            console.log('id '+editedRepairShopId);
+            setEditedRepairShop(editedRepairShopId);
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#modal').addClass('slds-fade-in-open');
+
+        }
+
+         function openAddModalFunction(){
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#modalAdd').addClass('slds-fade-in-open');
+        }
+
+        function openDeleteModalFunction(id){
+            recordToDeleteId = id;
+            openDeleteRepairShopModal();
+            console.log('id to delete: '+id);
+        }
+
+         function openDeleteRepairShopModal(){
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#deleteConfirmationModal').addClass('slds-fade-in-open');
+        }
+
+        function closeModal(){
+            j$('#modal').removeClass('slds-fade-in-open');
+            j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function closeModalAdd(){
+            j$('#modalAdd').removeClass('slds-fade-in-open');
+            j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function closeDeleteModal(){
+            j$('#deleteConfirmationModal').removeClass('slds-fade-in-open');
+            j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function openSpinnerModal(){
+            j$('#backdrop1').addClass('slds-backdrop--open');
+            j$('#spinnerModal').addClass('slds-fade-in-open');
+        }
+
+        function closeSpinnerModal(){
+          j$('#spinnerModal').removeClass('slds-fade-in-open');
+          j$('#backdrop1').removeClass('slds-backdrop--open');
+        }
+    </script>
+</apex:page>

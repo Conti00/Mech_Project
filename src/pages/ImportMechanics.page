@@ -1,0 +1,102 @@
+<!--
+ - Created by BRITENET on 12.11.2018.
+ -->
+<apex:page id="ImportMechanics"  standardController="Mechanic__c" extensions="MechanicImportController">
+    <apex:form id="importMechanicsForm">
+        <apex:pageBlock id="importMechanicsBlock">
+            <apex:pageBlockButtons location="top">
+                <!--<apex:pageBlockSection columns="1">-->
+                <input type="file" accept=".csv" id="inputMechanic"/>
+                <apex:commandButton value="{!$Label.Mech_Process}" onClick="uploadFile()" reRender="importMechanicsForm" status="status"/>
+                <apex:actionFunction name="importCSVFile" action="{!importCSVFile}" reRender="importMechanicsForm">
+                    <apex:param name="csvAsStringValue" assignTo="{!csvAsString}" value=""></apex:param>
+                </apex:actionFunction>
+                <apex:commandButton value="{!$Label.Mech_Clear}" action="{!clear}" reRender="importMechanicsForm" status="status"/>
+            </apex:pageBlockButtons>
+            <!--</apex:pageBlockSection>-->
+        </apex:pageBlock>
+        <apex:pageBlock id="importResultBlock" title="{!$Label.Mech_Result}">
+            <apex:actionFunction name="changeImportAvailability" action="{!changeImportAvailability}" reRender="importButtonsBlock"></apex:actionFunction>
+            <apex:pageBlockTable value="{!allMechanicsWrappers}" var="MechanicWrapper" id="importResultTable">
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Selected}</apex:facet>
+                    <apex:inputCheckbox value="{!MechanicWrapper.selectToImport}" onClick="checkboxValueChanged()"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <apex:outputText value="{!$ObjectType.Mechanic__c.fields.First_Name__c.Label}"/>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputText value="{!MechanicWrapper.mechanic.First_Name__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <apex:outputText value="{!$ObjectType.Mechanic__c.fields.Name.Label}"/>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputText value="{!MechanicWrapper.mechanic.Name}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <apex:outputText value="{!$ObjectType.Mechanic__c.fields.City__c.Label}"/>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputText value="{!MechanicWrapper.mechanic.City__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputPanel >
+                            <apex:outputText value="{!$ObjectType.Mechanic__c.fields.Country__c.Label}"/>
+                        </apex:outputPanel>
+                    </apex:facet>
+                    <apex:outputText value="{!MechanicWrapper.mechanic.Country__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Status}</apex:facet>
+                    <apex:outputText rendered="{!MechanicWrapper.saveSuccess != 'false' && MechanicWrapper.saveSuccess != 'true'}" value="{!MechanicWrapper.saveSuccess}"></apex:outputText>
+                    <apex:outputText rendered="{!MechanicWrapper.saveSuccess == 'true'}" value="Success"></apex:outputText>&nbsp;
+                    <apex:outputLink rendered="{!MechanicWrapper.mechanic.Id != null}" value="{!URLFOR($Action.Mechanic__c.View, MechanicWrapper.mechanic.Id)}" target="_blank">View</apex:outputLink>
+                </apex:column>
+            </apex:pageBlockTable>
+
+        </apex:pageBlock>
+        <apex:pageBlock id="importButtonsBlock">
+            <!--<apex:pageBlockSection columns="1">-->
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="{!$Label.Mech_All}" action="{!selectAlltoImport}" reRender="importMechanicsForm" status="status"/>
+                <apex:commandButton value="{!$Label.Mech_None}" action="{!deselectAllToImport}" reRender="importMechanicsForm" status="status"/>
+                <apex:commandButton value="{!$Label.Mech_Reverse}" action="{!reverseToImportSelection}" reRender="importMechanicsForm" status="status"/>
+                <apex:commandButton value="{!$Label.Mech_Import}" id="importMechanicsButton" action="{!insertImportedMechanics}" disabled="{!enableImport != true}" reRender="importMechanicsForm" status="status"/>
+            </apex:pageBlockButtons>
+            <!--</apex:pageBlockSection>-->
+        </apex:pageBlock>
+    </apex:form>
+
+
+    <script>
+        function checkboxValueChanged(){
+            changeImportAvailability();
+        }
+
+        function uploadFile()
+        {
+            var input = document.getElementById('inputMechanic');
+            console.log('aaaa'+input.files.length, input.files[0].type)
+            if(input.files.length != 0){
+                var fileToUpload = input.files[0];
+                var reader = new FileReader();
+                reader.onload = function()
+                {
+                    importCSVFile(reader.result);
+                };
+                reader.readAsBinaryString(fileToUpload);
+            }else{
+                window.alert('Only CSV allowed');
+            }
+        }
+
+    </script>
+</apex:page>

@@ -1,0 +1,798 @@
+<!--
+ - Created by BRITENET on 17.12.2018.
+ -->
+
+<apex:page id="Mech_OrgInfo" controller="Mech_OrgInfoController">
+
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jquery_min)}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.css')}"/>
+
+    <apex:slds />
+    <div class="slds-scope slds-is-relative ">
+        <article class="slds-card"
+                 style="margin-top: 10px; padding-bottom: 10px; background-image: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);">
+            <apex:form id="foundUsersForm">
+                <apex:actionFunction name="getLoginHistoryActionFunction" action="{!getUserLoginHistoryById}"
+                                     reRender="outputPanelHistory" onComplete="openloginHistoryModal();">
+                    <apex:param name="userHistoryIdValue" value="" assignTo="{!userHistoryId}"/>
+                </apex:actionFunction>
+                <apex:actionFunction name="getUserGroupsActionFunction" action="{!getUserGroupsById}"
+                                     reRender="outputPanelGroups" onComplete="openUserGroupsModal();">
+                    <apex:param name="userGroupsIdValue" value="" assignTo="{!userGroupsId}"/>
+                </apex:actionFunction>
+                <div class="slds-card__header slds-grid">
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+
+                        <div class="slds-media__body">
+                            <h2>
+                                <span class="slds-text-heading_small">{!$Label.Session_Info}</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+
+                <div class="slds-card__body slds-card__body_inner" style="padding-top: 0px; ">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer" style="table-layout:fixed"
+                           id="table">
+                        <colgroup>
+                            <col style="width:10%"/>
+                            <col style="width:10%"/>
+                            <col style="width:35%"/>
+                            <col style="width:35%"/>
+                            <col style="width:10%"/>
+                        </colgroup>
+                        <thead>
+
+                        <tr class="slds-text-title_caps">
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Current_Org_URL}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!$Label.Current_Org_URL}
+                                </div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Instance_Name}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!$Label.Instance_Name}
+                                </div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Session_VisualForce}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!$Label.Session_VisualForce}
+                                </div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.SessionApi}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word; ">
+                                    {!$Label.SessionApi}
+                                </div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Number_of_Salesforce_Licenses}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word; ">
+                                    {!$Label.Number_of_Salesforce_Licenses}
+                                </div>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td data-label="{!$Label.Current_Org_URL}">
+                                <div class="slds-truncate" title="{!$Label.Current_Org_URL}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!SalesforceURL}
+                                </div>
+                            </td>
+                            <td data-label="{!$Label.Instance_Name}">
+                                <div class="slds-truncate" title="{!$Label.Instance_Name}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!InstanceName}
+                                </div>
+                            </td>
+                            <td data-label="{!$Label.Session_VisualForce}">
+                                <div class="slds-truncate" title="{!$Label.Session_VisualForce}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!Session}
+                                </div>
+                            </td>
+                            <td data-label="{!$Label.SessionApi}">
+                                <div class="slds-truncate" title="{!$Label.SessionApi}"
+                                     style="text-align:left; white-space: normal; overflow-wrap: break-word; word-wrap: break-word;">
+                                    {!$Api.Session_ID}
+                                </div>
+                            </td>
+                            <td data-label="{!$Label.Number_of_Salesforce_Licenses}">
+                                <div class="slds-truncate" title="{!$Label.Number_of_Salesforce_Licenses}"
+                                     style="text-align:left">
+                                    <span class="Count">{!numberOfLicenses} </span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!---->
+                <div class="slds-card__header slds-grid">
+
+                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
+
+                        <div class="slds-media__body">
+                            <h2>
+                                <span class="slds-text-heading_small">{!$Label.All_users}</span>
+                            </h2>
+                        </div>
+                    </header>
+                </div>
+
+
+                <div class="slds-card__body slds-card__body_inner" style="padding-top: 0px;">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer" id="table">
+                        <thead>
+                        <tr class="slds-text-title_caps">
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Mech_Action}">{!$Label.Mech_Action}</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate"
+                                     title="{!$Label.Mech_First_Name}">{!$Label.Mech_First_Name}</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate"
+                                     title="{!$Label.Mech_Last_Name}">{!$Label.Mech_Last_Name}</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Username}">{!$Label.Username}</div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Active}">{!$Label.Active}</div>
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <apex:repeat value="{!allUsers}" var="user">
+                            <tr>
+                                <td data-label="{!$Label.Mech_Action}">
+                                    <div class="slds-button-group" role="group">
+                                        <div class="slds-dropdown-trigger slds-button slds-button--neutral">
+                                        {!$Label.Mech_Action}
+                                            <div class="slds-dropdown slds-dropdown--left slds-text-heading--label slds-dropdown--menu">
+                                                <ul class="slds-dropdown__list" role="menu">
+                                                    <li href="#" class="slds-dropdown__item">
+                                                        <apex:commandLink id="openLoginHistoryModalButton"
+                                                                          value="{!$Label.Login_History}"
+                                                                          onclick="openloginHistoryModalFunction('{!user.Id}'); return false;">
+                                                        </apex:commandLink>
+                                                    </li>
+                                                    <li href="#" class="slds-dropdown__item">
+                                                        <apex:commandLink id="openUserGroupsModalButton"
+                                                                          value="{!$Label.Groups_Member}"
+                                                                          onclick="openUserGroupsModalFunction('{!user.Id}'); return false;">
+                                                        </apex:commandLink>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </td>
+                                <td data-label="{!$Label.Mech_First_Name}">
+                                    <div class="slds-truncate" title="{!$Label.Mech_First_Name}">{!user.FirstName}</div>
+                                </td>
+                                <td data-label="{!$Label.Mech_Last_Name}">
+                                    <div class="slds-truncate" title="{!$Label.Mech_Last_Name}">{!user.LastName}</div>
+                                </td>
+                                <td data-label="{!$Label.Username}">
+                                    <div class="slds-truncate" title="{!$Label.Username}">{!user.Username}</div>
+                                </td>
+                                <td data-label="{!$Label.Active}">
+                                    <div class="slds-truncate" title="{!$Label.Active}">
+                                        <apex:outputField value="{!user.isActive}" styleClass="slds-checkbox"/>
+                                    </div>
+                                </td>
+                            </tr>
+                         </apex:repeat>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="slds-card__body slds-card__body_inner" style="padding-left: 80%; ">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer" id="table">
+                       <thead>
+                        <tr class="slds-text-title_caps">
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Active_Users}" style="text-align:center">
+                                        {!$Label.Active_Users}
+                                </div>
+                            </th>
+                            <th scope="col">
+                                <div class="slds-truncate" title="{!$Label.Inactive_Users}" style="text-align:center">
+                                        {!$Label.Inactive_Users}
+                                </div>
+                            </th>
+                        </tr>
+                       </thead>
+                        <tbody>
+                        <tr>
+                            <td data-label="{!$Label.Active_Users}">
+                                <div class="slds-truncate" title="{!$Label.Active_Users}" style="text-align:center">
+                                    <span class="Count"> {!numberOfActiveUsers}</span>
+                                </div>
+                            </td>
+                            <td data-label="{!$Label.Inactive_Users}">
+                                <div class="slds-truncate" title="{!$Label.Inactive_Users}" style="text-align:center">
+                                    <span class="Count">   {!numberOfInactiveUsers} </span>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <apex:outputPanel id="ButtonsOutputPanel">
+                    <div style="padding-left:1%">
+                        <div class="slds-button slds-button_neutral">
+                            <apex:commandLink id="showClasses" rendered="{!NOT(showClasses)}"
+                                              style="text-decoration:none"
+                                              value="{!$Label.Show_Classes}" action="{!showClasses}"
+                                              onClick="openSpinnerModal()" onComplete="closeSpinnerModal()"
+                                              reRender="ClassesOutputPanel, ButtonsOutputPanel" status="status">
+                            </apex:commandLink>
+                            <apex:commandLink id="hideClasses" rendered="{!showClasses}" style="text-decoration:none"
+                                              onClick="openSpinnerModal()" onComplete="closeSpinnerModal()"
+                                              value="{!$Label.Hide_Classes}" action="{!showClasses}"
+                                              reRender="ClassesOutputPanel, ButtonsOutputPanel" status="status">
+                            </apex:commandLink>
+                        </div>
+                        <div class="slds-button slds-button_neutral">
+                            <apex:commandLink id="showPages" rendered="{!NOT(showPages)}" style="text-decoration:none"
+                                              onClick="openSpinnerModal()" onComplete="closeSpinnerModal()"
+                                              value="{!$Label.Show_Pages}" action="{!showPages}"
+                                              reRender="PagesOutputPanel, ButtonsOutputPanel" status="status">
+                            </apex:commandLink>
+                            <apex:commandLink id="hidePages" rendered="{!showPages}" style="text-decoration:none"
+                                              onClick="openSpinnerModal()" onComplete="closeSpinnerModal()"
+                                              value="{!$Label.Hide_Pages}" action="{!showPages}"
+                                              reRender="PagesOutputPanel, ButtonsOutputPanel" status="status">
+                            </apex:commandLink>
+                        </div>
+                        <div class="slds-button slds-button_neutral">
+                            <apex:commandLink id="openLicenseModalButton"
+                                              value="{!$Label.License}"
+                                              onclick="openlicenseModal(); return false;">
+                            </apex:commandLink>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <apex:outputPanel id="ClassesOutputPanel">
+                    <apex:outputPanel rendered="{!showClasses}" id="ClassesPanel">
+                        <div class="slds-section slds-is-closed" id="AllClasses">
+                            <div class="slds-card__header slds-grid">
+                                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                    <div class="slds-media__body">
+                                        <h2>
+                                            <span class="slds-text-heading_small">{!$Label.All_Classes}</span>
+                                        </h2>
+                                    </div>
+                                </header>
+                            </div>
+                            <div class="slds-card__body slds-card__body_inner" style="padding-top: 0px;">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer"
+                                       id="table" style="table-layout:fixed;">
+                                    <colgroup>
+                                        <col style="width:10%"/>
+                                        <col style="width:40%"/>
+                                        <col style="width:15%"/>
+                                        <col style="width:15%"/>
+                                        <col style="width:10%"/>
+                                        <col style="width:10%"/>
+                                    </colgroup>
+                                    <thead>
+                                    <tr class="slds-text-title_caps">
+                                        <th scope="col">
+                                            <div class="slds-truncate" title="{!$Label.RN}">{!$Label.RN}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Mech_Name}">{!$Label.Mech_Name}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Created_Date}">{!$Label.Created_Date}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Last_Modified_Date}">{!$Label.Last_Modified_Date}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.CreatedBy}">{!$Label.CreatedBy}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Api_Version}">{!$Label.Api_Version}</div>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <apex:variable value="{!1}" var="count"/>
+                                    <apex:repeat value="{!allClasses}" var="class">
+                                        <tr>
+                                            <td data-label="{!$Label.Row_Number}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Row_Number}">{!FLOOR(count)}</div>
+                                            </td>
+                                            <td data-label="{!$Label.Mech_Name}">
+                                                <div class="slds-truncate" title="{!$Label.Mech_Name}">
+                                                    <apex:outputLink value="/{!class.id}"
+                                                                     target="_blank">{!class.Name}</apex:outputLink>
+                                                </div>
+                                            </td>
+                                            <td data-label="{!$Label.Created_Date}">
+                                                <div class="slds-truncate" title="{!$Label.Created_Date}"></div>
+                                                <apex:outputText value="{0,date,dd'/'MM'/'yyyy}">
+                                                    <apex:param value="{!class.CreatedDate}"/>
+                                                </apex:outputText>
+                                            </td>
+                                            <td data-label="{!$Label.Last_Modified_Date}">
+                                                <div class="slds-truncate" title="{!$Label.Last_Modified_Date}"></div>
+                                                <apex:outputText value="{0,date,dd'/'MM'/'yyyy}">
+                                                    <apex:param value="{!class.LastModifiedDate}"/>
+                                                </apex:outputText>
+                                            </td>
+                                            <td data-label="{!$Label.CreatedBy}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.CreatedBy}">{!class.CreatedBy.Name}</div>
+                                            </td>
+                                            <td data-label="{!$Label.Api_Version}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Api_Version}">{!class.ApiVersion}</div>
+                                            </td>
+                                            <apex:variable var="count" value="{!count+1}"/>
+                                        </tr>
+                                    </apex:repeat>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel id="PagesOutputPanel">
+                    <apex:outputPanel rendered="{!showPages}">
+                        <div class="slds-card__header slds-grid">
+                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                <div class="slds-media__body">
+                                    <h2>
+                                        <span class="slds-text-heading_small">{!$Label.All_Pages}</span>
+                                    </h2>
+                                </div>
+                            </header>
+                        </div>
+                        <div class="slds-card__body slds-card__body_inner" style="padding-top: 0px;">
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer" id="table"
+                                   style="table-layout:fixed">
+                                <colgroup>
+                                    <col style="width:10%"/>
+                                    <col style="width:40%"/>
+                                    <col style="width:15%"/>
+                                    <col style="width:15%"/>
+                                    <col style="width:10%"/>
+                                    <col style="width:10%"/>
+                                </colgroup>
+                                <thead>
+                                <tr class="slds-text-title_caps">
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="{!$Label.RN}">{!$Label.RN}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="{!$Label.Mech_Name}">{!$Label.Mech_Name}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$Label.Created_Date}">{!$Label.Created_Date}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$Label.Last_Modified_Date}">{!$Label.Last_Modified_Date}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="{!$Label.CreatedBy}">{!$Label.CreatedBy}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$Label.Api_Version}">{!$Label.Api_Version}</div>
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <apex:variable value="{!1}" var="count"/>
+                                <apex:repeat value="{!allPages}" var="pages">
+                                    <tr>
+
+                                        <td data-label="{!$Label.Row_Number}">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Row_Number}">{!FLOOR(count)}</div>
+                                        </td>
+                                        <td data-label="{!$Label.Mech_Name}">
+                                            <div class="slds-truncate" title="{!$Label.Mech_Name}"></div>
+                                            <apex:outputLink value="/{!pages.id}"
+                                                             target="_blank">{!pages.Name}</apex:outputLink>
+                                        </td>
+                                        <td data-label="{!$Label.Created_Date}">
+                                            <div class="slds-truncate" title="{!$Label.Created_Date}"></div>
+                                            <apex:outputText value="{0,date,dd'/'MM'/'yyyy}">
+                                                <apex:param value="{!pages.CreatedDate}"/>
+                                            </apex:outputText>
+                                        </td>
+                                        <td data-label="{!$Label.Last_Modified_Date}">
+                                            <div class="slds-truncate" title="{!$Label.Last_Modified_Date}"></div>
+                                            <apex:outputText value="{0,date,dd'/'MM'/'yyyy}">
+                                                <apex:param value="{!pages.LastModifiedDate}"/>
+                                            </apex:outputText>
+                                        </td>
+                                        <td data-label="{!$Label.CreatedBy}">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.CreatedBy}">{!pages.CreatedBy.Name}</div>
+                                        </td>
+                                        <td data-label="{!$Label.Api_Version}">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Api_Version}">{!pages.ApiVersion}</div>
+                                        </td>
+                                        <apex:variable var="count" value="{!count+1}"/>
+
+                                    </tr>
+                                </apex:repeat>
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                <c:Mech_loadingIconSLDS />
+            </apex:form>
+        </article>
+
+        <div class="slds">
+            <div class="slds-modal slds-scrollable" aria-hidden="false" role="dialog" id="loginHistoryModal">
+                <apex:form id="loginHistoryModal">
+                    <div class="slds-modal__container" style="max-width: 100%; max-height: 100%; ">
+                        <div class="slds-modal__header">
+                            <h2 class="slds-text-heading--medium">{!$Label.Login_History}</h2>
+                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                    title="{!$Label.Mech_Close}" onClick="closeloginHistoryModal(); return false;"
+                                    value="{!$Label.Mech_Close}"
+                                    reRender="none">
+                                <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                    <use xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"/>
+                                </svg>
+                                <span class="slds-assistive-text">{!$Label.Mech_Close}</span>
+                            </button>
+                        </div>
+                        <div class="slds-modal__content slds-p-around--medium">
+                            <apex:outputPanel id="outputPanelHistory">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer" id="table">
+                                    <thead>
+                                    <tr class="slds-text-title_caps">
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Login_Time}">{!$Label.Login_Time}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Source_Ip}">{!$Label.Source_Ip}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate" title="{!$Label.Browser}">{!$Label.Browser}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Platform}">{!$Label.Platform}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Mech_Status}">{!$Label.Mech_Status}</div>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <apex:repeat value="{!loginHistory}" var="loginHistoryItem">
+                                        <tr>
+                                            <td data-label="{!$Label.Login_Time}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Login_Time}">{!loginHistoryItem.LoginTime}</div>
+                                            </td>
+                                            <td data-label="{!$Label.Source_Ip}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Source_Ip}">{!loginHistoryItem.SourceIp}</div>
+                                            </td>
+
+                                            <td data-label="{!$Label.Browser}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Browser}">{!loginHistoryItem.Browser}</div>
+                                            </td>
+                                            <td data-label="{!$Label.Platform}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Platform}">{!loginHistoryItem.Platform}</div>
+                                            </td>
+                                            <td data-label="{!$Label.Mech_Status}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Mech_Status}">{!loginHistoryItem.Status}</div>
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                    </tbody>
+                                </table>
+                                <div class="slds-align_absolute-center" style="padding-top:1%">
+                                    <apex:outputLabel title="{!$Label.Login_history_is_empty}"
+                                                      rendered="{!hasNotLoginHistory}">{!$Label.Login_history_is_empty}
+                                    </apex:outputLabel>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                        <div class=" slds-docked-form-footer">
+                            <apex:commandButton id="closeloginHistoryModalButton" reRender="none"
+                                                styleClass="slds-button slds-button--neutral"
+                                                value="{!$Label.Mech_Close}"
+                                                onclick="closeloginHistoryModal()"/>
+                        </div>
+                    </div>
+                </apex:form>
+            </div>
+            <div class="slds-backdrop" id="backdrop"></div>
+        </div>
+
+        <div class="slds">
+            <div class="slds-modal slds-scrollable" aria-hidden="false" role="dialog" id="userGroupsModal">
+                <apex:form id="userGroupsModal">
+                    <div class="slds-modal__container">
+                        <div class="slds-modal__header">
+                            <h2 class="slds-text-heading--medium">{!$Label.Groups_Member}</h2>
+                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                    title="{!$Label.Mech_Close}" onClick="closeUserGroupsModal(); return false;"
+                                    value="{!$Label.Mech_Close}"
+                                    reRender="none">
+                                <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                    <use xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"/>
+                                </svg>
+                                <span class="slds-assistive-text">{!$Label.Mech_Close}</span>
+                            </button>
+                        </div>
+                        <div class="slds-modal__content slds-p-around--medium">
+                            <apex:outputPanel id="outputPanelGroups">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer" id="table">
+                                    <thead>
+                                    <tr class="slds-text-title_caps">
+                                        <th scope="col">
+                                            <div class="slds-truncate"
+                                                 title="Group Name">{!$Label.Group_Name}</div>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <apex:repeat value="{!groupMembers}" var="groupMember">
+                                        <tr>
+                                            <td data-label="{!$Label.Group_Name}">
+                                                <div class="slds-truncate"
+                                                     title="{!$Label.Group_Name}">{!groupMember.Group.Name}</div>
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                    </tbody>
+                                </table>
+                                <div class="slds-align_absolute-center" style="padding-top:1%">
+                                    <apex:outputLabel title="{!$Label.User_does_not_belong_to_any_roups}"
+                                                      rendered="{!hasNotGroupMember}">{!$Label.User_does_not_belong_to_any_roups}
+                                    </apex:outputLabel>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                        <div class="slds-modal__footer">
+                            <apex:commandButton id="closeUserGroupsModalButton" reRender="none"
+                                                styleClass="slds-button slds-button--neutral"
+                                                value="{!$Label.Mech_Close}"
+                                                onclick="closeUserGroupsModal()"/>
+                        </div>
+                    </div>
+                </apex:form>
+            </div>
+            <div class="slds-backdrop" id="backdrop"></div>
+        </div>
+
+        <div class="slds">
+            <div class="slds-modal slds-scrollable" aria-hidden="false" role="dialog" id="licenseModal">
+                <apex:form id="licenseForm">
+                    <div class="slds-modal__container">
+                        <div class="slds-modal__header">
+                            <h2 class="slds-text-heading--medium">{!$Label.License}</h2>
+                            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                                    title="{!$Label.Mech_Close}" onClick="closelicenseModal(); return false;"
+                                    value="{!$Label.Mech_Close}"
+                                    reRender="none">
+                                <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                    <use xmlns:xlink="http://www.w3.org/1999/xlink"
+                                         xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#close')}"/>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                        </div>
+
+
+                        <div class="slds-modal__content slds-p-around--medium">
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer" id="table">
+                                <thead>
+                                <tr class="slds-text-title_caps">
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$ObjectType.UserLicense.Name}">{!$ObjectType.UserLicense.Name}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$Label.UsedLicenses}">{!$Label.UsedLicenses}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$Label.TotalLicenses}">{!$Label.TotalLicenses}</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate"
+                                             title="{!$Label.Mech_Status}">{!$Label.Mech_Status}</div>
+                                    </th>
+
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <apex:repeat value="{!allLicenses}" var="allLicensesItem">
+                                    <tr>
+                                        <td data-label="{!$Label.Mech_Name}">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.Mech_Name}"> {!allLicensesItem.license.Name}</div>
+                                        </td>
+                                        <td data-label="{!$Label.UsedLicenses}">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.UsedLicenses}"><span
+                                                    class="ModalCount">{!allLicensesItem.license.UsedLicenses}</span>
+                                            </div>
+
+                                        </td>
+                                        <td data-label="{!$Label.TotalLicenses}">
+                                            <div class="slds-truncate"
+                                                 title="{!$Label.TotalLicenses}"><span
+                                                    class="ModalCount">{!allLicensesItem.license.TotalLicenses}</span>
+                                            </div>
+                                        </td>
+
+                                        <td data-label="{!$Label.Mech_Status}">
+                                            <div class="slds-progress-bar" aria-valuemin="0"
+                                                 aria-valuemax="{!allLicensesItem.license.TotalLicenses}"
+                                                 aria-valuenow="{!allLicensesItem.license.UsedLicenses}"
+                                                 role="progressbar">
+                                             <span class="slds-progress-bar__value"
+                                                   style="width: {!allLicensesItem.percent}%; ">
+                                                 <span class="slds-assistive-text"></span>
+                                             </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+
+                                </apex:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="slds-modal__footer">
+                            <apex:commandButton id="closeLicenseModalButton" reRender="none"
+                                                styleClass="slds-button slds-button--neutral"
+                                                value="{!$Label.Mech_Close}"
+                                                onclick="closelicenseModal()"/>
+                        </div>
+                    </div>
+                </apex:form>
+            </div>
+            <div class="slds-backdrop" id="backdrop"></div>
+        </div>
+    </div>
+
+    <div class="slds-backdrop" id="backdrop"></div>
+    <div class="slds">
+        <div class="slds-modal demo-only" aria-hidden="false" role="dialog" id="spinnerModal">
+            <div>
+                <div class=" slds-p-around--medium">
+                    <div id="spinner" style="height: 6rem; opacity: 0.5; z-index: 1009; background-color: white; ">
+                        <div role="status" class="slds-spinner slds-spinner--large slds-spinner_delayed">
+                            <span class="slds-assistive-text">{!$Label.Mech_Loading}</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        function openloginHistoryModalFunction(id){
+            getLoginHistoryActionFunction(id);
+        }
+
+        function openlicenseModalFunction(){
+            getLicenseActionFunction();
+        }
+
+        function openUserGroupsModalFunction(id){
+            getUserGroupsActionFunction(id);
+        }
+
+        j$ = jQuery.noConflict();
+
+        function openloginHistoryModal(){
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#loginHistoryModal').addClass('slds-fade-in-open');
+        }
+
+        function openlicenseModal(){
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#licenseModal').addClass('slds-fade-in-open');
+            runCounter();
+        }
+
+        function closelicenseModal(){
+          j$('#licenseModal').removeClass('slds-fade-in-open');
+          j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function closeloginHistoryModal(){
+          j$('#loginHistoryModal').removeClass('slds-fade-in-open');
+          j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function openUserGroupsModal(){
+            j$('#backdrop').addClass('slds-backdrop--open');
+            j$('#userGroupsModal').addClass('slds-fade-in-open');
+        }
+
+        function closeUserGroupsModal(){
+          j$('#userGroupsModal').removeClass('slds-fade-in-open');
+          j$('#backdrop').removeClass('slds-backdrop--open');
+        }
+
+        function runCounter(){
+          $('.ModalCount').each(function () {
+          var $this = $(this);
+          jQuery({ Counter: 0 }).animate({ Counter: $this.text() }, {
+            duration: 1500,
+            easing: 'swing',
+            step: function () {
+              $this.text(Math.ceil(this.Counter));
+            }
+          });
+        });
+        }
+
+        $('.Count').each(function () {
+          var $this = $(this);
+          jQuery({ Counter: 0 }).animate({ Counter: $this.text() }, {
+            duration: 1000,
+            easing: 'swing',
+            step: function () {
+              $this.text(Math.ceil(this.Counter.toFixed(2)));
+            }
+          });
+        });
+
+        function openSpinnerModal(){
+            j$('#backdrop1').addClass('slds-backdrop--open');
+            j$('#spinnerModal').addClass('slds-fade-in-open');
+        }
+
+        function closeSpinnerModal(){
+          j$('#spinnerModal').removeClass('slds-fade-in-open');
+          j$('#backdrop1').removeClass('slds-backdrop--open');
+        }
+
+    </script>
+</apex:page>

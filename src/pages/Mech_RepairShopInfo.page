@@ -1,0 +1,279 @@
+<apex:page standardController="Repair_Shop__c" extensions="Mech_RepairShopInfoController">
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.css')}"/>
+
+    <style type="text/css">
+            .customPopup {
+            border-bottom-style: solid;
+            border-bottom-color: DarkGrey;
+            background-color: white;
+            z-index: 9999;
+            position: absolute;
+            top: 50%;
+            width: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+        }
+        .ui-front { z-index: 90 !important; }
+        .ui-dialog { z-index: 90 !important ;}
+
+         .ui-dialog-titlebar-close {
+         visibility: hidden;
+
+
+    </style>
+
+    <apex:form id="repairShopDetailForm">
+        <apex:messages >
+            <apex:pageBlock title="{!Repair_Shop__c.Name}" id="repairShopDetailsBlock">
+                <apex:pageBlockSection title="{!$Label.Mech_Information}" columns="2" id="repairShopInfoSection"
+                                       collapsible="true">
+                    <apex:outputField value="{!Repair_Shop__c.Name}"/>
+                    <apex:outputField value="{!Repair_Shop__c.Phone_Number__c}"/>
+                    <apex:outputField value="{!Repair_Shop__c.Website__c}"/>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection title="{!$Label.Mech_Address_Information}" columns="2"
+                                       id="repairShopDetailsPanel"
+                                       collapsible="true">
+                    <apex:outputField value="{!Repair_Shop__c.Street__c}"/>
+                    <apex:outputField value="{!Repair_Shop__c.City__c}"/>
+                    <apex:outputField value="{!Repair_Shop__c.Country__c}"/>
+                    <apex:outputField value="{!Repair_Shop__c.Parent_Repair_Shop__c}"/>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <apex:pageBlock >
+                <apex:include pageName="RepairShopMap"/>
+            </apex:pageBlock>
+            <apex:pageBlock >
+                <apex:pageBlockSection title="{!$Label.Mech_Hierarchy}" id="hierarchyBlock" columns="1">
+                    <c:RN_sObjectHierarchy sObjectName="Repair_Shop__c" relationshipFieldName="Parent_Repair_Shop__c"
+                                           sObjectId="{!Repair_Shop__c.Id}" sObjectFields="Name"/>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <div align="center" draggable="false">
+                <apex:commandButton value="{!$Label.Mech_Edit}" action="{!Edit}" immediate="true"/>
+                <apex:commandbutton onClick="$('#hireDialog').dialog('open'); return false;" value="{!$Label.Mech_Hire}"
+                                    id="hireDialogButtonOpener"/>
+                <apex:commandButton value="{!$Label.Mech_Delete}" action="{!showPopup}"/>
+                <apex:outputPanel id="popup">
+                    <apex:actionRegion >
+                        <apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayPopUp}"/>
+                        <apex:outputPanel styleClass="customPopup" layout="block" rendered="{!displayPopUp}">
+                            <apex:pageMessages />
+                            <apex:pageBlock >
+                                <apex:outputText value="{!$Label.Mech_Delete} {!Repair_Shop__c.Name}?"/>
+                                <apex:pageBlockButtons location="bottom">
+                                    <apex:commandButton value="{!$Label.Mech_Confirm}" action="{!Delete}"
+                                                        rerender="popup"/>
+                                    <apex:commandButton value="{!$Label.Mech_Cancel}" action="{!closePopup}"
+                                                        immediate="true"
+                                                        rerender="popup"/>
+                                </apex:pageBlockButtons>
+                            </apex:pageBlock>
+                        </apex:outputPanel>
+                    </apex:actionRegion>
+                </apex:outputPanel>
+            </div>
+            <apex:pageBlock title="{!$Label.Mech_Contracts}" id="ContractsBlock">
+                <apex:pageBlockTable value="{!repairShopContracts}" var="Contract" id="repairShopContracts">
+                    <apex:column >
+                        <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                        <apex:outputLink value="/{!Contract.Id}"> {!$Label.Mech_View}</apex:outputLink>
+                        <apex:outputLink value="/{!Contract.Id}/e"> {!$Label.Mech_Edit}</apex:outputLink>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">{!$ObjectType.Mechanic__c.fields.Name.Label}</apex:facet>
+                        <apex:outputText value="{!Contract.Mechanic__r.Name}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">{!$ObjectType.Mechanics_Job__c.fields.Start_Day__c.Label}</apex:facet>
+                        <apex:outputText value="{0,date,dd/MM/yy}">
+                            <apex:param value="{!Contract.Start_Day__c}"/>
+                        </apex:outputText>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">{!$ObjectType.Mechanics_Job__c.fields.End_Day__c.Label}</apex:facet>
+                        <apex:outputText value="{0,date,dd/MM/yy}">
+                            <apex:param value="{!Contract.End_Day__c}"/>
+                        </apex:outputText>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:messages>
+    </apex:form>
+    <apex:relatedList list="Histories"/>
+
+    <div id="hireDialog" title="{!$Label.Mech_hireMechanicsTo+Repair_Shop__c.Name}">
+        <apex:form id="hireMechanicForm" html-class="dialogForm">
+            <apex:pageBlock title="{!$Label.Mech_SearchForm}" id="mechanicSearchBlock">
+                <apex:pageMessages />
+                <apex:pageBlockSection title="{!$Label.Mech_Search}" columns="2" id="mechanicSearchCriteriaSection">
+                    <apex:inputField value="{!searchedMechanic.First_Name__c}" id="firstName"/>
+                    <apex:inputField value="{!searchedMechanic.Email__c}" id="email"/>
+                    <apex:inputField value="{!searchedMechanic.Name}" id="lastName" required="true"/>
+                    <apex:inputField value="{!searchedMechanic.Country__c}" id="country"/>
+                </apex:pageBlockSection>
+                <apex:pageBlockButtons location="bottom" id="mechanicSearchButtonsSection">
+                    <apex:commandButton action="{!searchForAvailableMechanics}" status="status"
+                                        value="{!$Label.Mech_Search}" reRender="hireMechanicForm"/>
+                    <apex:commandButton action="{!clear}" status="status" value="{!$Label.Mech_Clear}"
+                                        reRender="mechanicSearchForm, mechanicSearchBlock, selectedMechanicsBlock"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockTable value="{!availableMechanicsWrappers}" var="MechanicWrapper"
+                                     id="availableMechanicsTable">
+                    <apex:column >
+                        <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                        <apex:actionRegion >
+                            <apex:commandLink status="status" action="{!selectMechanic}"
+                                              reRender="selectedMechanicsBlock, mechanicSearchBlock"
+                                              style="text-decoration='underline'">
+                                {!$Label.Mech_Select}
+                                <apex:param name="selectedMechanicId" assignTo="{!selectedMechanicId}"
+                                            value="{!MechanicWrapper.mechanic.Id}"/>
+                            </apex:commandLink>
+                        </apex:actionRegion>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$ObjectType.Mechanic__c.fields.Name.Label}
+                        </apex:facet>
+                        <apex:outputText value="{!MechanicWrapper.mechanic.Name}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$ObjectType.Mechanic__c.fields.Email__c.Label}
+                        </apex:facet>
+                        <apex:outputText value="{!MechanicWrapper.mechanic.Email__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$ObjectType.Mechanic__c.fields.Country__c.Label}
+                        </apex:facet>
+                        <apex:outputText value="{!MechanicWrapper.mechanic.Country__c}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+            <apex:pageBlock id="selectedMechanicsBlock" title="{!$Label.Mech_mechanicsToHire}">
+                <apex:inputCheckbox value="{!applyDatesToAllContracts}"> {!$Label.Mech_OneDateForAllContracts}
+                </apex:inputCheckbox>
+                <apex:pageBlockTable value="{!selectedMechanicsWrappers}" var="MechanicWrapper"
+                                     id="selectedMechanicsTable">
+                    <apex:column >
+                        <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                        <apex:commandLink status="status" action="{!removeMechanic}"
+                                          rendered="{!MechanicWrapper.contractCreationSuccess != 'SUCCESS'}"
+                                          reRender="selectedMechanicsBlock, mechanicSearchBlock">
+                            {!$Label.Mech_Remove}
+                            <apex:param name="selectedMechanicId" assignTo="{!selectedMechanicId}"
+                                        value="{!MechanicWrapper.mechanic.Id}"/>
+                        </apex:commandLink>&nbsp;
+                        <apex:commandLink status="status" action="{!editMechanicContractDates}"
+                                          rendered="{!MechanicWrapper.editContractDates != true &&
+                                          MechanicWrapper.contractCreationSuccess != 'SUCCESS' }"
+                                          reRender="selectedMechanicsBlock">
+                            {!$Label.Mech_Edit}
+                            <apex:param name="selectedMechanicId" assignTo="{!selectedMechanicId}"
+                                        value="{!MechanicWrapper.mechanic.Id}"/>
+                        </apex:commandLink>
+                        <!--<actionRegion>-->
+                        <apex:commandLink status="status" action="{!saveContractDates}"
+                                          rendered="{!MechanicWrapper.editContractDates == true}"
+                                          reRender="selectedMechanicsBlock">
+                            {!$Label.Mech_Save}
+                            <apex:param name="selectedMechanicId" assignTo="{!selectedMechanicId}"
+                                        value="{!MechanicWrapper.mechanic.Id}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$ObjectType.Mechanic__c.fields.Name.Label}
+                        </apex:facet>
+                        <apex:outputText value="{!MechanicWrapper.mechanic.Name}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$ObjectType.Mechanic__c.fields.Email__c.Label}
+                        </apex:facet>
+                        <apex:outputText value="{!MechanicWrapper.mechanic.Email__c}"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$Label.Mech_Start_Day}
+                        </apex:facet>
+                        <apex:outputField value="{!MechanicWrapper.newContract.Start_Day__c}"
+                                          rendered="{!MechanicWrapper.editContractDates != true}">
+                            <apex:param value="{!MechanicWrapper.newContract.Start_Day__c}"/>
+                        </apex:outputField>
+                        <apex:inputField value="{!MechanicWrapper.newContract.Start_Day__c}"
+                                         rendered="{!MechanicWrapper.editContractDates == true}" required="true"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$Label.Mech_End_Day}
+                        </apex:facet>
+                        <apex:outputField value="{!MechanicWrapper.newContract.End_Day__c}"
+                                          rendered="{!MechanicWrapper.editContractDates != true}">
+                            <apex:param value="{!MechanicWrapper.newContract.End_Day__c}}"/>
+                        </apex:outputField>
+                        <apex:inputField value="{!MechanicWrapper.newContract.End_Day__c}"
+                                         rendered="{!MechanicWrapper.editContractDates == true}" required="true"/>
+                    </apex:column>
+                    <apex:column >
+                        <apex:facet name="header">
+                            {!$Label.Mech_Status}
+                        </apex:facet>
+                        <apex:outputText rendered="{!MechanicWrapper.contractCreationSuccess != null}"
+                                         value="{!MechanicWrapper.contractCreationSuccess}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+                <apex:pageBlockButtons location="bottom" id="mechanicSearchButtonsSection">
+                    <apex:actionRegion >
+                        <apex:commandButton id="hireButton" action="{!hire}" status="status" value="{!$Label.Mech_Hire}"
+                                            reRender="selectedMechanicsBlock, ContractsBlock"
+                                            onClick="$('#hireDialog').dialog('close')"
+                                            disabled="{!!activateHireButton}"/>
+                        <apex:actionFunction action="{!clear}" name="clearHireDialog"
+                                             reRender="selectedMechanicsBlock, mechanicSearchBlock"/>
+                        <apex:commandButton id="cancelHiringButton" onClick="$('#hireDialog').dialog('close')"
+                                            action="{!clear}" status="status" value="{!$Label.Mech_Cancel}"
+                                            reRender="selectedMechanicsBlock, mechanicSearchBlock, ContractsBlock"/>
+                    </apex:actionRegion>
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+
+    <script language="JavaScript">
+        twistSection(document.getElementById('img_{!$Component.repairShopDetailForm.repairShopDetailsBlock.repairShopDetailsPanel}'));
+
+        $(function () {
+            $("#hireDialog").dialog({
+                autoOpen: false,
+            });
+            $("#hireDialog").dialog("option", "minWidth", 800);
+            $("#hireDialogButtonOpener").click(function () {
+                $("#hireDialog").dialog("open");
+            });
+            $("#cancelHiringButton").click(function () {
+                $("#hireDialog").dialog("close");
+            });
+            $('div#hireDialog').on('dialogclose', function (event) {
+                clearHireDialog();
+            });
+        });
+
+    </script>
+</apex:page>

@@ -1,0 +1,96 @@
+<apex:page standardController="Repair_Shop__c" extensions="CustomRepairShopController">
+    <style type="text/css">
+            .customPopup {
+            border-bottom-style: solid;
+            border-bottom-color: DarkGrey;
+            background-color: white;
+            z-index: 9999;
+            position: absolute;
+            top: 50%;
+            width: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+        }
+        .ui-front { z-index: 90 !important; }
+        .ui-dialog { z-index: 90 !important ;}
+
+    </style>
+
+    <apex:form id="repairShopDetailForm">
+        <apex:pageBlock title="{!Repair_Shop__c.Name}" id="repairShopDetailsBlock">
+            <apex:pageBlockSection title="{!$Label.Mech_Information}" columns="2" id="repairShopInfoSection" collapsible="true">
+                <apex:outputField value="{!Repair_Shop__c.Name}"/>
+                <apex:outputField value="{!Repair_Shop__c.Phone_Number__c}"/>
+                <apex:outputField value="{!Repair_Shop__c.Website__c}"/>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="{!$Label.Mech_Address_Information}" columns="2" id="repairShopDetailsPanel"
+                                   collapsible="true">
+                <apex:outputField value="{!Repair_Shop__c.Street__c}"/>
+                <apex:outputField value="{!Repair_Shop__c.City__c}"/>
+                <apex:outputField value="{!Repair_Shop__c.Country__c}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:pageBlock >
+            <apex:include pageName="RepairShopMap"/>
+        </apex:pageBlock>
+        <div align="center" draggable="false">
+            <apex:commandButton value="{!$Label.Mech_Edit}" action="{!Edit}" immediate="true"/>
+            <apex:commandButton value="{!$Label.Mech_Delete}" action="{!showPopup}"/>
+            <apex:outputPanel id="popup">
+                <apex:actionRegion >
+                    <apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayPopUp}"/>
+                    <apex:outputPanel styleClass="customPopup" layout="block" rendered="{!displayPopUp}">
+                        <apex:pageMessages />
+                        <apex:pageBlock >
+                            <apex:outputText value="Delete {!Repair_Shop__c.Name}?"/>
+                            <apex:pageBlockButtons location="bottom">
+                                <apex:commandButton value="Confirm" action="{!Delete}"
+                                                    rerender="popup"/>
+                                <apex:commandButton value="Cancel" action="{!closePopup}" immediate="true"
+                                                    rerender="popup"/>
+                            </apex:pageBlockButtons>
+                        </apex:pageBlock>
+                    </apex:outputPanel>
+                </apex:actionRegion>
+            </apex:outputPanel>
+        </div>
+        <apex:pageBlock title="{!$Label.Mech_Contracts}" id="ContractsBlock">
+            <apex:pageBlockTable value="{!repairShopContracts}" var="Contract" id="repairShopContracts">
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                    <apex:outputLink value="/{!Contract.Id}"> View</apex:outputLink>
+                    <apex:outputLink value="/{!Contract.Id}/e"> Edit</apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Name}</apex:facet>
+                    <apex:outputText value="{!Contract.Mechanic__r.Name}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Start_Day}</apex:facet>
+                    <apex:outputText value="{!Contract.Start_Day__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_End_Day}</apex:facet>
+                    <apex:outputText value="{!Contract.End_Day__c}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:relatedList list="Histories"/>
+
+    <script>
+        twistSection(document.getElementById('img_{!$Component.repairShopDetailForm.repairShopDetailsBlock.repairShopDetailsPanel}'));
+    </script>
+</apex:page>

@@ -1,0 +1,16 @@
+/**
+ * Created by BRITENET on 14.11.2018.
+ */
+
+public with sharing class TestImageController {
+
+        @RemoteAction public static Id saveImage(String name, String contentType, String data) {
+            System.debug('name '+name);
+            System.debug('contentType '+contentType);
+            System.debug('data '+data);
+            Document d = new Document(Name=name, FolderId=UserInfo.getUserId(), contentType=contentType, Body=EncodingUtil.base64Decode(data));
+            Database.insert(d, true);
+            return d.id;
+        }
+
+    }

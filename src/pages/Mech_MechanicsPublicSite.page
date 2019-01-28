@@ -1,0 +1,35 @@
+<!--
+ - Created by BRITENET on 15.11.2018.
+ -->
+<apex:page id="Mech_MechanicsPublicSite" controller="Mech_MechanicsPublicSiteController" readOnly="true">
+    <apex:form >
+        <apex:pageBlock title="{!$Label.Mech_Search_Result}" id="searchResult">
+            <apex:pageBlockTable value="{!mechanics}" var="mech" id="resultPageBlockTable">
+                <apex:column >
+                    <apex:facet name="header">
+                        {!$ObjectType.Mechanic__c.fields.Name.Label}
+                    </apex:facet>
+                    <apex:outputText value="{!mech.Name}" id="outName"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        {!$ObjectType.Mechanic__c.fields.Email__c.Label}
+                    </apex:facet>
+                    <apex:outputText value="{!mech.Email__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        {!$ObjectType.Mechanic__c.fields.Phone_Number__c.Label}
+                    </apex:facet>
+                    <apex:outputText value="{!mech.Phone_Number__c}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        {!$ObjectType.Mechanic__c.fields.Country__c.Label}
+                    </apex:facet>
+                    <apex:outputText value="{!mech.Country__c}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

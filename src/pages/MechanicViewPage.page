@@ -1,0 +1,315 @@
+<apex:page standardController="Mechanic__c" extensions="CustomMechanicController">
+
+    <apex:includeScript value="{!URLFOR($Resource.jquery)}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.jquery_ui, '/jquery-ui-1.12.1/jquery-ui.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.jcrop, '/Jcrop-master/css/jquery.Jcrop.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jcrop, '/Jcrop-master/js/jquery.Jcrop.min.js')}"/>
+
+    <style type="text/css">
+            .customPopup {
+            border-bottom-style: solid;
+            border-bottom-color: DarkGrey;
+            background-color: white;
+            z-index: 9999;
+            position: absolute;
+            top: 50%;
+            width: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+        }
+
+        .ui-widget-header,.ui-state-default, ui-button {
+            background:#b9cd6d;
+            border: 3px solid #b9cd6d;
+            color: #FFFFFF;
+            font-weight: bold;
+         }
+        .ui-front { z-index: 90 !important; }
+        .ui-dialog { z-index: 90 !important ;}
+
+    </style>
+
+    <apex:form id="mechanicDetailForm">
+        <apex:pageMessages />
+        <apex:pageBlock title="{!Mechanic__c.Full_Name__c}" id="mechanicDetailsBlock">
+            <div id="profilePhotoContainer"
+                 style="padding-right: 92px; float: left; margin-left:-100px; margin-top: -50px; margin-bottom:-20px; width:10%; ">
+                <apex:image id="image"
+                            url="https://winkeyecare.com/wp-content/uploads/2013/03/Empty-Profile-Picture-e1485925353755.jpg"
+                            rendered="{!attachment.id == null}" width="100" height="100"
+                            style="margin-left: 95px; position: relative; padding-top:50px;"/>
+                <apex:image url="/servlet/servlet.FileDownload?file={!attachment.id}"
+                            rendered="{!attachment.id != null}" width="100" height="100"
+                            style="margin-left: 95px; position: relative; padding-top:0px;"/>
+            </div>
+            <apex:pageBlockSection title="{!$Label.Mech_Information}" columns="1" id="mechanicInfoSection" collapsible="true">
+                <apex:outputField value="{!Mechanic__c.First_Name__c}"/>
+                <apex:outputField value="{!Mechanic__c.Name}"/>
+                <apex:outputField value="{!Mechanic__c.Email__c}"/>
+                <apex:outputField value="{!Mechanic__c.Phone_Number__c}" id="mechanicPhone">
+                    &nbsp;
+                    <apex:commandbutton id="copyToClipboardButton" onClick="ClipBoard('{!$Component.mechanicPhone}');"
+                                        reRender="mechanicPhone" value="{!$Label.Mech_Copy}"/>
+                </apex:outputField>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="{!$Label.Mech_Address_Information}" columns="2" id="mechanicDetailsPanel" collapsible="true">
+                <apex:outputField value="{!Mechanic__c.Street__c}"/>
+                <apex:outputField value="{!Mechanic__c.City__c}"/>
+                <apex:outputField value="{!Mechanic__c.Country__c}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:pageBlock >
+
+            <div align="center" draggable="false">
+                <apex:pageBlockButtons location="bottom" id="mechanicDetailsButtons">
+                <apex:commandButton value="{!$Label.Mech_Edit}" action="{!Edit}" immediate="true"/>
+
+
+
+                <apex:commandButton value="{!$Label.Mech_New_Profile_Photo}" onClick="$('#imgInp').val('');$('#uploadPictureDialog').dialog('open'); return false;"
+                                     immediate="true"
+                                     status="status"/>
+
+
+
+
+
+                <apex:commandButton id="mechanicPictureDeleteButton" value="{!$Label.Mech_Delete_Profile_Photo}"
+                                    action="{!deleteImages}"
+                                    disabled="{!attachment.id = null}"
+                                    reRender="mechanicDetailsBlock"
+                                    status="status"/>
+                <apex:commandButton value="{!$Label.Mech_Delete_Profile}" action="{!showPopup}" immediate="true"/>
+                <apex:outputPanel id="popup">
+                    <apex:actionRegion >
+                        <apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayPopUp}"/>
+                        <apex:outputPanel styleClass="customPopup" layout="block" rendered="{!displayPopUp}">
+                            <apex:pageMessages />
+                            <apex:pageBlock >
+                                <apex:outputText value="{!$Label.Mech_Delete} {!Mechanic__c.Name}?"/>
+                                <apex:pageBlockButtons location="bottom">
+                                    <apex:commandButton value="{!$Label.Mech_Confirm}" action="{!Delete}"
+                                                        rerender="popup"/>
+                                    <apex:commandButton value="{!$Label.Mech_Cancel}" action="{!closePopup}" immediate="true"
+                                                        rerender="popup"/>
+                                </apex:pageBlockButtons>
+                            </apex:pageBlock>
+                        </apex:outputPanel>
+                    </apex:actionRegion>
+                </apex:outputPanel>
+                </apex:pageBlockButtons>
+            </div>
+        </apex:pageBlock>
+        <apex:pageBlock title="{!$Label.Mech_Contracts}" id="ContractsBlock">
+            <apex:pageBlockTable value="{!mechanicContracts}" var="Contract" id="mechanicContracts">
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Action}</apex:facet>
+                    <apex:outputLink value="/{!Contract.Id}"> {!$Label.Mech_View}</apex:outputLink>
+                    <apex:outputLink value="/{!Contract.Id}/e"> {!$Label.Mech_Edit}</apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Name}</apex:facet>
+                    <apex:outputText value="{!Contract.Repair_Shop__r.Name}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_Start_Day}</apex:facet>
+                    <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                        <apex:param value="{!Contract.Start_Day__c}"/>
+                    </apex:outputText>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">{!$Label.Mech_End_Day}</apex:facet>
+                    <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                        <apex:param value="{!Contract.End_Day__c}"/>
+                    </apex:outputText>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:relatedList list="Histories"/>
+
+
+
+    <div id="uploadPictureDialog" title="Upload Picture for: {!mechanic.Name}">
+        <apex:form >
+            <apex:actionFunction name="rerenderImage" action="{!setLastAttachment}"
+                                 reRender="mechanicDetailsBlock, mechanicPictureDeleteButton"/>
+            <apex:actionFunction name="refreshSelectedImage" reRender="target"/>
+            <apex:pageMessages />
+            <div class="toClear" style="margin:auto;">
+                <label for="imgInp">Choose image to upload (PNG, JPG). Max size 1MB</label><br/>
+                <input type="file" id="imgInp" accept=".jpeg, .jpg, .png" style="outline:none;" name="aaaa"/>
+            </div><br/>
+            <apex:pageBlock >
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="Save" onClick="saveImage();return false;" style="margin:auto;"  />
+                    <apex:outputPanel html-class="toClear" id="xxx">
+                        fdgdfg
+                        <img id="target" class="crop" src="#" alt="your image" style="border:1px solid;"/>
+                    </apex:outputPanel>
+                    vvvvv
+                    <canvas id="preview" width="150" height="150" style="border:1px solid; margin:5px; overflow:hidden;display:none;"/>
+                    ccccc
+                </apex:pageBlockButtons>
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+
+    <script language="JavaScript">
+
+         $(function() {
+            $( "#sendEmailDialog" ).dialog({
+               autoOpen: false,
+            });
+            $( "#sendEmailButtonOpener" ).click(function() {
+               $( "#sendEmailDialog" ).dialog( "open" );
+            });
+            $( "#sendEmailButton" ).click(function() {
+               $( "#sendEmailDialog" ).dialog( "close" );
+            });
+
+            $( "#hireDialog" ).dialog({
+               autoOpen: false,
+            });
+            $( "#hireDialog" ).dialog( "option", "minWidth", 800 );
+            $( "#hireDialogButtonOpener" ).click(function() {
+               $( "#hireDialog" ).dialog( "open" );
+            });
+            $( "#cancelHiringButton" ).click(function() {
+               $( "#hireDialog" ).dialog( "close" );
+            });
+            $('div#hireDialog').on('dialogclose', function(event){
+                clearHireDialog();
+            });
+
+            $( "#uploadPictureDialog" ).dialog({
+               autoOpen: false,
+            });
+            $( "#uploadPictureDialog" ).dialog( "option", "minWidth", 550 );
+            $( "#buttonID" ).click(function() {
+               $( "#uploadPictureDialog" ).dialog( "open" );
+            });
+            $( "#buttonID" ).click(function() {
+               $( "#uploadPictureDialog" ).dialog( "close" );
+            });
+
+            $('#uploadPictureDialog').on('dialogclose', function (event) {
+                $('.toClear').find('input').val('');
+            });
+
+
+            $('#File').bind('change', function() {
+              //this.files[0].size gets the size of your file.
+              alert(this.files[0].size);
+            });
+        });
+
+        function closeHireDialog(){
+            $("#hireDialog").dialog("close");
+
+        }
+
+        twistSection(document.getElementById(
+                 '{!$Component.mechanicDetailForm.mechanicDetailsBlock.mechanicDetailsSection}')
+                 .getElementsByTagName('img')[0])
+
+        function ClipBoard(copytextid){
+            console.log(copytextid)
+            copyToClipboard(copytextid);
+            }
+
+        function copyToClipboard(elementId) {
+            var aux = document.createElement("input");
+            aux.setAttribute("value", '{!mechanic.Phone_Number__c}');
+            document.body.appendChild(aux);
+            aux.select();
+            document.execCommand("copy");
+            document.body.removeChild(aux);
+            }
+
+
+        var canvas,fileName,fileType;
+        $("#imgInp").change(function(){
+            console.log(this);
+            readURL(this);
+        });
+
+        function readURL(input) {
+            if (input.files[0].size > 1000000 || !(validFileType(input.files[0]))){
+                window.alert('Maximum file size is 1 MB. Only JPEG, PNG allowed');
+            }
+            else{
+                //$("#target").css("display", "block");
+                $("#preview").css("display", "block");
+                fileName = input.files[0].name;
+                fileType = input.files[0].type;
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#target').attr('src', e.target.result);
+                        $('#target').Jcrop({
+                            onChange : updatePreview,
+                            onSelect : updatePreview,
+                            bgColor : 'red',
+                            bgOpacity : .7,
+                            aspectRatio : 1,
+                            boxWidth: 200, boxHeight: 150,
+                            setSelect : [ 0, 0, 1400, 1300 ]
+                        });
+                        refreshSelectedImage();
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        function updatePreview(c) {
+            if(parseInt(c.w) > 0) {
+                // Show image preview
+                var imageObj = $("#target")[0];
+                canvas = $("#preview")[0];
+                var context = canvas.getContext("2d");
+                context.drawImage(imageObj, c.x, c.y, c.w, c.h, 0, 0, canvas.width, canvas.height);
+            }
+        };
+
+        function onSaveResult(result, event) {
+            rerenderImage();
+            console.log('File was saved as: '+result);
+        }
+        var fileTypes = [
+        'image/jpeg',
+        'image/pjpeg',
+        'image/png'
+        ];
+
+        function validFileType(file) {
+        for(var i = 0; i < fileTypes.length; i++) {
+            if(file.type === fileTypes[i]) {
+            return true;
+            }
+        }
+        return false;
+        }
+
+        function saveImage(){
+            var parent = '{!mechanic.Id}';
+            var p1 = canvas.toData
+            var p1 = canvas.toDataURL(fileType).match(/data:(.+);base64,(.+)/);
+            console.log("Save Image button clicked1");
+            console.log(p1[2]);
+            {!$RemoteAction.CustomMechanicController.saveImage}(fileName, p1[1], p1[2], parent, onSaveResult);
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>
+</apex:page>

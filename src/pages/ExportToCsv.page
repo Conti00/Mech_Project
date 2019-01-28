@@ -1,0 +1,5 @@
+<!--
+ - Created by BRITENET on 07.11.2018.
+ -->
+<apex:page id="ExportToCsv" controller="CustomSearchController"  contentType="application/vnd.ms-excel#ExportCSV.csv" >{!CsvContent}
+</apex:page>
